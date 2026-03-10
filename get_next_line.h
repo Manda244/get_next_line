@@ -26,8 +26,8 @@ char	*ft_strchr(const char *s, int c);
 void	ft_bzero(void *s, size_t n);
 void	*ft_calloc(size_t nmemb, size_t size);
 char	*ft_free(char *buffer, char *buf);
-char	*ft_next(char *buffer);
-char	*ft_line(char *buffer);
-char	*read_line(int fd, char *res);
+char	*ft_next(char *buffer, char sign);
+char	*ft_line(char *buffer, char sign);
+char	*read_line(int fd, char *res, char sign);
 
 #endif
