@@ -5,117 +5,75 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: marasolo <marasolo@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/02/16 11:33:27 by marasolo          #+#    #+#             */
-/*   Updated: 2026/03/10 09:26:00 by marasolo         ###   ########.fr       */
+/*   Created: 2026/03/14 15:00:08 by marasolo          #+#    #+#             */
+/*   Updated: 2026/03/14 15:08:05 by marasolo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-// join and free
-char	*ft_free(char *buffer, char *buf)
-{
-	char	*temps;
-
-	temps = ft_strjoin(buffer, buf);
-	free(buffer);
-	return (temps);
-}
-
-//take line for return
-char	*ft_line(char *buffer, char sign)
+static char	*ft_line(char **rest)
 {
 	char	*line;
-	int		i;
-	int		j;
+	char	*tmp;
+	char	*n_line;
 
-	i = 0;
-	if (!buffer[i])
-		return (NULL);
-	while (buffer[i] && buffer[i] != sign)
-		i++;
-	line = ft_calloc(i + 2, sizeof(char));
-	j = 0;
-	while (buffer[i] && buffer[i] != sign)
+	if (!*rest || **rest == '\0')
 	{
-		line[j++] = buffer[i++];
+		free(*rest);
+		*rest = NULL;
+		return (NULL);
 	}
-	if (buffer[i] && buffer[i] == sign)
-		line[i++] = sign;
+	tmp = NULL;
+	n_line = ft_strchr(*rest, '\n');
+	if (n_line)
+	{
+		line = ft_substr(*rest, 0, n_line - *rest + 1);
+		tmp = ft_strdup(n_line + 1);
+	}
+	else
+		line = ft_strdup(*rest);
+	free(*rest);
+	*rest = tmp;
 	return (line);
 }
 
-// delet lin find
-char	*ft_next(char *buffer, char sign)
-{
-	int		i;
-	int		j;
-	char	*line;
-
-	i = 0; //find lin of first lin
-	while (buffer[i] && buffer[i] != sign)
-		i++;
-	if (!buffer[i])
-	{
-		free(buffer);
-		return (NULL);
-	}
-	//line of file - line of firstline + 1
-	line = ft_calloc((ft_strlen(buffer) - i + 1), sizeof(char));
-	j = 0;
-	// line == buffer
-	while (buffer[i])
-	{
-		line[j++] = buffer[i++];
-	}
-	free(buffer);
-	return (line);
-}
-
-char	*read_line(int fd, char *res, char sign)
+static char	*read_line(int fd, char *rest)
 {
 	char	*buffer;
+	char	*tmp;
 	int		count;
-	
-	//malloc if res dont exist 
-	if (!res)
-		res = ft_calloc(1, 1);
-	buffer = ft_calloc(BUFFER_SIZE + 1, sizeof(char));
+
+	buffer = malloc(BUFFER_SIZE + 1);
+	if (!buffer)
+		return (NULL);
 	count = 1;
-	while (count > 0)
+	while (count > 0 && !ft_strchr(rest, '\n'))
 	{
-		// while not of read
 		count = read(fd, buffer, BUFFER_SIZE);
 		if (count == -1)
 		{
 			free(buffer);
+			free (rest);
 			return (NULL);
 		}
-		// 0 to end for liks
-		buffer[count] = 0;
-		// join and free
-		res = ft_free(res, buffer);
-		// quit if \n find
-		if (ft_strchr(buffer, sign))
-			break;
+		buffer[count] = '\0';
+		tmp = ft_strjoin(rest, buffer);
+		free(rest);
+		rest = tmp;
 	}
 	free(buffer);
-	return (res);
+	return (rest);
 }
 
 char	*get_next_line(int fd)
 {
-	static char	*buffer;
+	static char	*rest;
 	char		*line;
-	char		sign;
-	
-	sign = '\n';
-	if (fd < 0 || BUFFER_SIZE <= 0 || read(fd, 0, 0) < 0)
+
+	if (fd < 0 || BUFFER_SIZE <= 0)
 		return (NULL);
-	buffer = read_line(fd, buffer, sign);
-	if (!buffer)
-		return (NULL);
-	line = ft_line(buffer, sign);
-	buffer = ft_next(buffer, sign);
+	rest = read_line(fd, rest);
+	line = ft_line(&rest);
 	return (line);
 }
